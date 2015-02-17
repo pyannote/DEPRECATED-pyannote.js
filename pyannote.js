@@ -36,35 +36,33 @@
 
     // ---- Current time ------------------------------------------------------
 
-    plugin.t = undefined;
-
     plugin.setTime = function (t) {
       plugin.publish(timeSyncGroup + '.time', t);
     };
 
-    function _updateTime(t, broadcaster) {
-      if (this.updateTime !== undefined) {
-        this.updateTime(t, broadcaster);
+    function updateTime(t, broadcaster) {
+      this.t = t;
+      if (this.timeHasChanged !== undefined) {
+        this.timeHasChanged(broadcaster);
       }
     }
 
-    plugin.subscribe(timeSyncGroup + '.time', _updateTime);
+    plugin.subscribe(timeSyncGroup + '.time', updateTime);
 
     // ---- Current zoom ------------------------------------------------------
-
-    plugin.zoom = undefined;
 
     plugin.setZoom = function (zoom) {
       plugin.publish(timeSyncGroup + '.zoom', zoom);
     };
 
-    function _updateZoom(zoom, broadcaster) {
-      if (this.updateZoom !== undefined) {
-        this.updateZoom(zoom, broadcaster);
+    function updateZoom(zoom, broadcaster) {
+      this.zoom = zoom;
+      if (this.zoomHasChanged !== undefined) {
+        this.zoomHasChanged(broadcaster);
       }
     }
 
-    plugin.subscribe(timeSyncGroup + '.zoom', _updateZoom);
+    plugin.subscribe(timeSyncGroup + '.zoom', updateZoom);
 
     return plugin;
   };
