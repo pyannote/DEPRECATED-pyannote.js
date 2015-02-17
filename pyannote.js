@@ -67,6 +67,29 @@
     return plugin;
   };
 
+  my.Player = function (media, timeSyncGroup) {
+
+    var plugin = my.TimeSyncPlugin('player', timeSyncGroup);
+
+    plugin.media = media;
+
+    plugin.media.addEventListener('timeupdate', function () {
+      
+      var currentTime = plugin.media.currentTime;
+      plugin.setTime(currentTime);
+    
+    });
+
+    plugin.timeHasChanged = function (broadcaster) {
+
+      if (broadcaster !== plugin.name) {
+        plugin.media.currentTime = plugin.t;
+      }
+    };
+
+    return plugin;
+  };
+
   return my;
 
 }));
