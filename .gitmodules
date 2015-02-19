@@ -1,0 +1,6 @@
+[submodule "Radio"]
+	path = vendor/radio.js
+	url = git@github.com:uxder/Radio
+[submodule "d3"]
+	path = vendor/d3.js
+	url = git@github.com:mbostock/d3
