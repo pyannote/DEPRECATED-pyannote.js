@@ -12,78 +12,65 @@
 
   var my = {};
 
-  my.BasePlugin = function (name) {
+  my.BasePlugin = function (name, syncGroups) {
 
     var plugin = {};
 
     plugin.name = name;
 
-    plugin.publish = function (event, data) {
+    plugin._sync = {};
+
+    plugin._syncGroups = {};
+    for (var key in syncGroups) { plugin._syncGroups[key] = syncGroups[key]; }
+
+    // publish
+
+    plugin.setSync = function (key, value) {
+      // TODO check if key is in _syncGroups
       var broadcaster = plugin.name;
-      radio(event).broadcast(data, broadcaster);
+      var event = plugin._syncGroups[key] + '.' + key;
+      radio(event).broadcast(key, value, broadcaster);
     };
 
-    plugin.subscribe = function (event, func) {
-      radio(event).subscribe([func, plugin]);
-    };
+    // subscribe
 
-    return plugin;
-  };
-
-  my.TimeSyncPlugin = function (name, timeSyncGroup) {
-
-    var plugin = my.BasePlugin(name);
-
-    // ---- Current time ------------------------------------------------------
-
-    plugin.setTime = function (t) {
-      plugin.publish(timeSyncGroup + '.time', t);
-    };
-
-    function updateTime(t, broadcaster) {
-      this.t = t;
-      if (this.timeHasChanged !== undefined) {
-        this.timeHasChanged(broadcaster);
-      }
+    function _updateSync(key, value, broadcaster) {
+      this._sync[key] = value;
+      this.hasChanged(key, broadcaster);
     }
 
-    plugin.subscribe(timeSyncGroup + '.time', updateTime);
-
-    // ---- Current zoom ------------------------------------------------------
-
-    plugin.setZoom = function (zoom) {
-      plugin.publish(timeSyncGroup + '.zoom', zoom);
-    };
-
-    function updateZoom(zoom, broadcaster) {
-      this.zoom = zoom;
-      if (this.zoomHasChanged !== undefined) {
-        this.zoomHasChanged(broadcaster);
-      }
+    for (var key in syncGroups) { 
+      var event = plugin._syncGroups[key] + '.' + key;
+      radio(event).subscribe([_updateSync, plugin]);
     }
 
-    plugin.subscribe(timeSyncGroup + '.zoom', updateZoom);
+    plugin.getSync = function (key) {
+      // TODO check if key is in _syncGroups
+      return plugin._sync[key];
+    }
+
+    plugin.hasChanged = function (key, broadcaster) {
+      console.log('hasChanged must be overriden');
+    };
 
     return plugin;
   };
 
   my.Player = function (media, timeSyncGroup) {
 
-    var plugin = my.TimeSyncPlugin('player', timeSyncGroup);
+    var syncGroups = {'time': timeSyncGroup};
+    var plugin = my.BasePlugin('player', syncGroups);
 
     plugin.media = media;
 
     plugin.media.addEventListener('timeupdate', function () {
-      
       var currentTime = plugin.media.currentTime;
-      plugin.setTime(currentTime);
-    
+      plugin.setSync('time', currentTime);
     });
 
-    plugin.timeHasChanged = function (broadcaster) {
-
-      if (broadcaster !== plugin.name) {
-        plugin.media.currentTime = plugin.t;
+    plugin.hasChanged = function (key, broadcaster) {
+      if (key === 'time' && broadcaster !== plugin.name) { 
+        plugin.media.currentTime = plugin.getSync('time');
       }
     };
 
