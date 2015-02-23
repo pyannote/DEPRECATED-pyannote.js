@@ -12,12 +12,14 @@
 
   var my = {};
 
-  my.BasePlugin = function (name, syncGroups) {
+  my.BasePlugin = function (name, container, syncGroups) {
 
     var plugin = {};
 
     plugin.name = name;
 
+    // plugin container (e.g. <div> or <video>)
+    plugin.container = container;
     plugin._sync = {};
 
     plugin._syncGroups = {};
@@ -56,11 +58,10 @@
     return plugin;
   };
 
-  my.Player = function (media, timeSyncGroup) {
+  my.Player = function (name, media, timeSyncGroup, container) {
 
     var syncGroups = {'time': timeSyncGroup};
-    var plugin = my.BasePlugin('player', syncGroups);
-
+    var plugin = my.BasePlugin(name, container, syncGroups);
     plugin.media = media;
 
     plugin.media.addEventListener('timeupdate', function () {
