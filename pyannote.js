@@ -12,6 +12,10 @@
 
   var my = {};
 
+  // broadcast 'resize' event to all plugins on window resize 
+  window.onresize = function () { radio('resize').broadcast(); };
+
+
   my.BasePlugin = function (name, container, syncGroups) {
 
     var plugin = {};
@@ -71,7 +75,16 @@
       radio(event).subscribe([_updateSync, plugin]);
     }
 
+    // -- subscription callback -- 
+    // called when window (and therefore plugin container) is resized
+    plugin.wasResized = function () {
+      console.log('wasResized must be overriden');
     };
+
+    // subscribe the plugin to the 'resize' event
+    radio('resize').subscribe(function() {
+      plugin.wasResized();
+    });
 
     return plugin;
   };
