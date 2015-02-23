@@ -16,43 +16,61 @@
 
     var plugin = {};
 
+    // plugin name (a.k.a. broadcaster in code below)
     plugin.name = name;
 
     // plugin container (e.g. <div> or <video>)
     plugin.container = container;
+
+    // synced keys
     plugin._sync = {};
 
+    // sync groups
     plugin._syncGroups = {};
     for (var key in syncGroups) { plugin._syncGroups[key] = syncGroups[key]; }
 
-    // publish
-
+    // broadcast new value of synced key 
+    // to all members of the same syncGroup
     plugin.setSync = function (key, value) {
-      // TODO check if key is in _syncGroups
-      var broadcaster = plugin.name;
-      var event = plugin._syncGroups[key] + '.' + key;
-      radio(event).broadcast(key, value, broadcaster);
+      if (key in plugin._syncGroups) {
+        var broadcaster = plugin.name;
+        var event = plugin._syncGroups[key] + '.' + key;
+        radio(event).broadcast(key, value, broadcaster);
+      }
     };
 
-    // subscribe
+    // get current value for synced key
+    plugin.getSync = function (key) {
+      return plugin._sync[key];
+    }
 
+    // -- subscription callback -- 
+    // called when value of synced keys has changed
+    // key: the synced key whose value has changed
+    // broadcaster: name of the plugin that actually changed the value
+    plugin.hasChanged = function (key, broadcaster) {
+      console.log('hasChanged must be overriden');
+    };
+
+    // key: the synced key whose value has changed
+    // value: the new value of the synced key
+    // broadcaster: name of the plugin that actually changed the value
+    // this: the plugin that subscribed to key
     function _updateSync(key, value, broadcaster) {
+      // update value of synced key... 
       this._sync[key] = value;
+      // ... and tell the plugin that value has changed
       this.hasChanged(key, broadcaster);
     }
 
-    for (var key in syncGroups) { 
+    // subscribe the plugin to its sync keys
+    // e.g. if plugin syncGroups is {'time': 'group1', 'data': 'group2'}, 
+    // it will be subscribed to events 'group1.time' and 'group2.data'
+    for (var key in syncGroups) {
       var event = plugin._syncGroups[key] + '.' + key;
       radio(event).subscribe([_updateSync, plugin]);
     }
 
-    plugin.getSync = function (key) {
-      // TODO check if key is in _syncGroups
-      return plugin._sync[key];
-    }
-
-    plugin.hasChanged = function (key, broadcaster) {
-      console.log('hasChanged must be overriden');
     };
 
     return plugin;
