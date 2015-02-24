@@ -35,7 +35,7 @@
 
     // broadcast new value of synced key 
     // to all members of the same syncGroup
-    plugin.setSync = function (key, value) {
+    plugin.set = function (key, value) {
       if (key in plugin._syncGroups) {
         var broadcaster = plugin.name;
         var event = plugin._syncGroups[key] + '.' + key;
@@ -44,7 +44,7 @@
     };
 
     // get current value for synced key
-    plugin.getSync = function (key) {
+    plugin.get = function (key) {
       return plugin._sync[key];
     }
 
@@ -52,8 +52,8 @@
     // called when value of synced keys has changed
     // key: the synced key whose value has changed
     // broadcaster: name of the plugin that actually changed the value
-    plugin.hasChanged = function (key, broadcaster) {
-      console.log('hasChanged must be overriden');
+    plugin.update = function (key, broadcaster) {
+      console.log('update must be overriden');
     };
 
     // key: the synced key whose value has changed
@@ -64,7 +64,7 @@
       // update value of synced key... 
       this._sync[key] = value;
       // ... and tell the plugin that value has changed
-      this.hasChanged(key, broadcaster);
+      this.update(key, broadcaster);
     }
 
     // subscribe the plugin to its sync keys
@@ -77,13 +77,13 @@
 
     // -- subscription callback -- 
     // called when window (and therefore plugin container) is resized
-    plugin.wasResized = function () {
-      console.log('wasResized must be overriden');
+    plugin.resize = function () {
+      console.log('resize must be overriden');
     };
 
     // subscribe the plugin to the 'resize' event
     radio('resize').subscribe(function() {
-      plugin.wasResized();
+      plugin.resize();
     });
 
     return plugin;
@@ -97,12 +97,12 @@
 
     plugin.media.addEventListener('timeupdate', function () {
       var currentTime = plugin.media.currentTime;
-      plugin.setSync('time', currentTime);
+      plugin.set('time', currentTime);
     });
 
-    plugin.hasChanged = function (key, broadcaster) {
+    plugin.update = function (key, broadcaster) {
       if (key === 'time' && broadcaster !== plugin.name) { 
-        plugin.media.currentTime = plugin.getSync('time');
+        plugin.media.currentTime = plugin.get('time');
       }
     };
 
