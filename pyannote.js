@@ -15,64 +15,69 @@
   // broadcast 'resize' event to all plugins on window resize 
   window.onresize = function () { radio('resize').broadcast(); };
 
-
-  my.BasePlugin = function (name, container, syncGroups) {
+  my.BasePlugin = function (name, sync, container) {
 
     var plugin = {};
 
     // plugin name (a.k.a. broadcaster in code below)
     plugin.name = name;
 
-    // plugin container (e.g. <div> or <video>)
+    // plugin container
     plugin.container = container;
 
-    // synced keys
-    plugin._sync = {};
+    // internal _model
+    plugin._model = {};
 
     // sync groups
-    plugin._syncGroups = {};
-    for (var key in syncGroups) { plugin._syncGroups[key] = syncGroups[key]; }
+    plugin._sync = {};
+    for (var category in sync) { 
+      plugin._sync[category] = sync[category]; 
+      plugin._model[category] = {};
+    }
 
-    // broadcast new value of synced key 
-    // to all members of the same syncGroup
-    plugin.set = function (key, value) {
-      if (key in plugin._syncGroups) {
+    // plugin.set('time', 'currentTime', 3)
+    plugin.set = function (category, property, new_value) {
+      if (category in plugin._sync) {
         var broadcaster = plugin.name;
-        var event = plugin._syncGroups[key] + '.' + key;
-        radio(event).broadcast(key, value, broadcaster);
+        var event = plugin._sync[category] + '.' + category;
+        radio(event).broadcast(category, property, new_value, broadcaster);
       }
     };
 
     // get current value for synced key
-    plugin.get = function (key) {
-      return plugin._sync[key];
+    plugin.get = function (category, property) {
+      if (property in plugin._model[category]) {
+        return plugin._model[category][property];
+      }
     }
 
     // -- subscription callback -- 
     // called when value of synced keys has changed
     // key: the synced key whose value has changed
     // broadcaster: name of the plugin that actually changed the value
-    plugin.update = function (key, broadcaster) {
+    plugin.update = function (category, property, broadcaster, old_value, new_value) {
       console.log('update must be overriden');
     };
 
-    // key: the synced key whose value has changed
-    // value: the new value of the synced key
+    // category: 
+    // property: 
+    // new_value: the new value of the property
     // broadcaster: name of the plugin that actually changed the value
     // this: the plugin that subscribed to key
-    function _updateSync(key, value, broadcaster) {
+    function _update(category, property, new_value, broadcaster) {
       // update value of synced key... 
-      this._sync[key] = value;
+      var old_value = this.get(category, property);
+      this._model[category][property] = new_value;
       // ... and tell the plugin that value has changed
-      this.update(key, broadcaster);
+      this.update(category, property, broadcaster, old_value, new_value);
     }
 
     // subscribe the plugin to its sync keys
-    // e.g. if plugin syncGroups is {'time': 'group1', 'data': 'group2'}, 
+    // e.g. if plugin sync is {'time': 'group1', 'data': 'group2'}, 
     // it will be subscribed to events 'group1.time' and 'group2.data'
-    for (var key in syncGroups) {
-      var event = plugin._syncGroups[key] + '.' + key;
-      radio(event).subscribe([_updateSync, plugin]);
+    for (var category in sync) {
+      var event = plugin._sync[category] + '.' + category;
+      radio(event).subscribe([_update, plugin]);
     }
 
     // -- subscription callback -- 
@@ -91,18 +96,23 @@
 
   my.Player = function (name, media, timeSyncGroup, container) {
 
-    var syncGroups = {'time': timeSyncGroup};
-    var plugin = my.BasePlugin(name, container, syncGroups);
+    var plugin = my.BasePlugin(name, {'time': timeSyncGroup}, container);
     plugin.media = media;
+
+    plugin.media.addEventListener('loadedmetadata', function () {
+      var duration = plugin.media.duration;
+      plugin.set('time', 'extent', [0, duration]);
+    });
 
     plugin.media.addEventListener('timeupdate', function () {
       var currentTime = plugin.media.currentTime;
-      plugin.set('time', currentTime);
+      plugin.set('time', 'currentTime', currentTime);
     });
 
-    plugin.update = function (key, broadcaster) {
-      if (key === 'time' && broadcaster !== plugin.name) { 
-        plugin.media.currentTime = plugin.get('time');
+    plugin.update = function (category, property, broadcaster, old_value, new_value) {
+      if (broadcaster !== plugin.name && category === 'time' && property === 'currentTime') {
+        var currentTime = plugin.get(category, property);
+        plugin.media.currentTime = currentTime;
       }
     };
 
