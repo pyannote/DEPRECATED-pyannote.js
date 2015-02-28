@@ -57,7 +57,7 @@
       plugin.scale.range([0, width-2*plugin.config.margin]);
       plugin.rect.attr("width", width-2*plugin.config.margin);
       plugin.update();
-    }
+    };
 
     plugin.resize();
 
