@@ -116,6 +116,8 @@
       }
     };
 
+    plugin.resize = function () { };
+
     return plugin;
   };
 
