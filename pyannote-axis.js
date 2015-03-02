@@ -19,38 +19,55 @@
     var sync = {'time': timeSync};
     var plugin = pyannote.BasePlugin(name, sync, container);
 
-    plugin.svg = d3.select(plugin.container).append("svg")
-                                            .attr("class", "pyannote");
-    plugin.g = plugin.svg.append("g")
-                         .attr("class", "axis");
+    plugin.config = {};
+    plugin.config.margin = 50;
+    plugin.config.height = 20;
 
-    plugin.draw = function() {
+    plugin.scale = d3.scale.linear();
 
-        var width = plugin.container.clientWidth;
-        var height = plugin.container.clientHeight;
-        plugin.svg.attr("width", width)
-                  .attr("height", 100);
+    plugin.svg = d3.select(plugin.container).append("svg");
+    plugin.svg.attr("height", plugin.config.height)
+              .attr("class", "pyannote");
 
-        var extent = plugin.get('time', 'extent');
-        var scale = d3.time.scale()
-                           .domain([new Date(2012, 0, 1, 0, 0, 0, 1000*extent[0]), 
-                                    new Date(2012, 0, 1, 0, 0, 0, 1000*extent[1])])
-                           .range([0, width]);
+    plugin.g = plugin.svg.append("g");
+    plugin.g.attr("transform", "translate(" + plugin.config.margin + ", 0)");
 
-        var xAxis = d3.svg.axis()
-                          .scale(scale);
+    plugin.viz = {};
+    plugin.viz.marker = plugin.g.append("line")
+                                .attr("x1", 0)
+                                .attr("y1", 0)
+                                .attr("x2", 0)
+                                .attr("y2", plugin.config.height)
+                                .attr("stroke-width", 3)
+                                .style("shape-rendering", "crispEdges")
+                                .style("stroke", "red");
 
-        plugin.g.call(xAxis);
+    plugin.viz.axis = plugin.g.append("g");
+    plugin.viz.axis.attr("class", "axis");
 
+    plugin.update = function (category, property, broadcaster, old_value, new_value) {
+
+      var extent = plugin.get('time', 'extent');
+      plugin.scale.domain(extent);
+      
+      var axis = d3.svg.axis().scale(plugin.scale);
+      plugin.viz.axis.call(axis);
+
+      var currentTime = plugin.get('time', 'currentTime');
+      plugin.viz.marker.attr("transform", 
+                         "translate(" + plugin.scale(currentTime) + ", 0)");
     };
 
     plugin.resize = function () {
-      plugin.draw();
+      var width = plugin.container.clientWidth;
+      plugin.svg.attr("width", width);
+      plugin.scale.range([0, width-2*plugin.config.margin]);
+
+      // plugin.update();
     };
 
-    plugin.update = function () {
-      plugin.draw();
-    };
+
+    plugin.resize();
 
     return plugin;
 
