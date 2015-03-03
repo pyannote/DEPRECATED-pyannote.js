@@ -1,9 +1,9 @@
-.pyannote > .axis text {
+.pyannote .axis text {
     font: 10px sans-serif;
 }
 
-.pyannote > .axis line,
-.pyannote > .axis path {
+.pyannote .axis line,
+.pyannote .axis path {
     fill: none;
     stroke: #000;
     shape-rendering: crispEdges;
