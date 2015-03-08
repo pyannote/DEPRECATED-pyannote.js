@@ -35,7 +35,7 @@
       plugin._model[category] = {};
     }
 
-    // plugin.set('time', 'currentTime', 3)
+    // plugin.set('medium', 'currentTime', 3)
     plugin.set = function (category, property, new_value) {
       if (category in plugin._sync) {
         var broadcaster = plugin.name;
@@ -73,7 +73,7 @@
     }
 
     // subscribe the plugin to its sync keys
-    // e.g. if plugin sync is {'time': 'group1', 'data': 'group2'}, 
+    // e.g. if plugin sync is {'medium': 'group1', 'data': 'group2'}, 
     // it will be subscribed to events 'group1.time' and 'group2.data'
     for (var category in sync) {
       var event = plugin._sync[category] + '.' + category;
@@ -94,32 +94,64 @@
     return plugin;
   };
 
-  my.Player = function (name, media, timeSyncGroup, container) {
 
-    var plugin = my.BasePlugin(name, {'time': timeSyncGroup}, container);
-    plugin.media = media;
+  my.Player = function (audioOrVideo, name, container, mediumSync) {
 
-    plugin.media.addEventListener('loadedmetadata', function () {
-      var duration = plugin.media.duration;
-      plugin.set('time', 'extent', [0, duration]);
+    var sync = {'medium': mediumSync};
+    var plugin = my.BasePlugin(name, sync, container);
+
+    plugin.player = d3.select(plugin.container).append(audioOrVideo);
+    plugin.player.attr("width", "100%")
+                 .attr("preload", "metadata")
+                 .attr("controls", true);
+
+    plugin.player.on('loadedmetadata', function() {
+      var duration = plugin.player[0][0].duration;
+      plugin.set('medium', 'duration', duration);
     });
 
-    plugin.media.addEventListener('timeupdate', function () {
-      var currentTime = plugin.media.currentTime;
-      plugin.set('time', 'currentTime', currentTime);
+    plugin.player.on('timeupdate', function() {
+      var currentTime = plugin.player[0][0].currentTime;
+      plugin.set('medium', 'currentTime', currentTime);
     });
+
+    plugin._updateCurrentTime = function(currentTime) {
+      plugin.player[0][0].currentTime = currentTime;
+    };
+
+    plugin._updateSource = function(source) {
+      plugin.player.attr("src", source.url)
+                   .attr("type", source.type);
+    };
 
     plugin.update = function (category, property, broadcaster, old_value, new_value) {
-      if (broadcaster !== plugin.name && category === 'time' && property === 'currentTime') {
-        var currentTime = plugin.get(category, property);
-        plugin.media.currentTime = currentTime;
+      
+      if (broadcaster !== plugin.name && category === 'medium' && property === 'currentTime') {
+        plugin._updateCurrentTime(new_value);
       }
+
+      if (category === 'medium' && property === 'source') {
+        plugin._updateSource(new_value);
+      }
+
     };
 
     plugin.resize = function () { };
 
     return plugin;
+
   };
+
+  my.VideoPlayer = function (name, container, mediumSync) {
+    var plugin = my.Player('video', name, container, mediumSync);
+    return plugin;
+  };
+
+  my.AudioPlayer = function (name, container, mediumSync) {
+    var plugin = my.Player('audio', name, container, mediumSync);
+    return plugin;
+  };
+
 
   return my;
 
