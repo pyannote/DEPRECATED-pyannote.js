@@ -14,16 +14,18 @@
 
   var my = {};
 
-  my.Timeline = function (name, container, timeSync, dataSync) {
+  my.Timeline = function (name, container, mediumSync, dataSync) {
 
-    var sync = {'time': timeSync, 'data': dataSync};
+    var sync = {'medium': mediumSync, 'data': dataSync};
     var plugin = pyannote.BasePlugin(name, sync, container);
 
     plugin.config = {};
     plugin.config.margin = 50;
     plugin.config.height = 50;
 
-    plugin.scale = d3.scale.linear();
+    plugin.scale = d3.scale.linear()
+                           .range([0, 1])
+                           .domain([0, 0]);
 
     plugin.svg = d3.select(plugin.container).append("svg");
     plugin.svg.attr("height", plugin.config.height)
@@ -48,23 +50,73 @@
                                 .style("shape-rendering", "crispEdges")
                                 .style("stroke", "red");
 
+    plugin._updateMarker = function(currentTime) {
+      plugin.viz.marker.attr(
+        "transform", "translate(" + plugin.scale(currentTime) + ", 0)");      
+    };
+
+    plugin._updateTracks = function(content) {
+      
+      var tracks = plugin.g.selectAll(".track").data(content);
+      
+      tracks.select("rect")
+            .attr("transform", function(d) {
+                return "translate(" + plugin.scale(d.segment.start) + ", 0)";
+            })
+            .attr("width", function(d) {
+                return plugin.scale(d.segment.end) - plugin.scale(d.segment.start);
+            });
+
+      tracks.enter()
+            .append("g")
+            .attr("class", "track")
+            .append("rect")
+            .attr("transform", function(d) {
+                return "translate(" + plugin.scale(d.segment.start) + ", " + plugin.config.height + ")";
+            })
+            .attr("width", function(d) {
+                return plugin.scale(d.segment.end) - plugin.scale(d.segment.start);
+            })
+            .attr("height", plugin.config.height);
+    };
+
     plugin.update = function (category, property, broadcaster, old_value, new_value) {
 
-      var extent = plugin.get('time', 'extent');
-      plugin.scale.domain(extent);
+      if (category === 'medium' && property === 'duration') {
+        plugin.scale.domain([0, new_value]);
+        plugin._updateTracks(plugin.get('data', 'content'));
+        return;
+      }
 
-      var currentTime = plugin.get('time', 'currentTime');
-      plugin.viz.marker.attr("transform", 
-                         "translate(" + plugin.scale(currentTime) + ", 0)");
+      if (category === 'medium' && property === 'currentTime') {
+        plugin._updateMarker(new_value);
+        return;
+      }
+
+      if (category === 'data' && property === 'content') {
+        plugin._updateTracks(new_value); 
+        return;
+      }
+
     };
 
     plugin.resize = function () {
+
       var width = plugin.container.clientWidth;
       plugin.svg.attr("width", width);
       plugin.scale.range([0, width-2*plugin.config.margin]);
 
       plugin.viz.border.attr("width", width-2*plugin.config.margin);
-      plugin.update();
+      
+      var duration = plugin.get('medium', 'duration');
+      if (duration !== undefined) { plugin.scale.domain([0, duration]); }
+
+      var currentTime = plugin.get('medium', 'currentTime');
+      if (currentTime !== undefined) { plugin._updateMarker(currentTime); }
+      
+      var content = plugin.get('data', 'content');
+      if (content !== undefined) { plugin._updateTracks(content); }
+
     };
 
     plugin.resize();
