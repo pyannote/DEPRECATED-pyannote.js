@@ -1,0 +1,73 @@
+<!doctype html>
+<html class="no-js" lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <link rel="stylesheet" href="css/bootstrap-theme.min.css">
+
+        <link rel="stylesheet" href="../pyannote-annotation.css">
+        <link rel="stylesheet" href="../pyannote-axis.css">
+
+    </head>
+    <body>
+
+      <div class="container-fluid">
+
+        <div class="row">
+          <!-- <div class="col-sm-8 col-sm-offset-2">
+            <video id="player" src="trailer.webm" type="video/webm" 
+                   width="100%" preload="metadata" controls>
+            </video>
+          </div> -->
+          <div id="player" class="col-sm-8 col-sm-offset-2">
+          </div>
+        </div>
+
+        <div class="row">
+          <div id="axis" class="col-sm-8 col-sm-offset-2" >
+          </div>
+        </div>
+
+        <div class="row">
+          <div id="plugin1" class="col-sm-8 col-sm-offset-2" >
+          </div>
+        </div>
+
+      </div>
+
+      <script src="js/jquery.min.js"></script>
+      <script src="js/bootstrap.min.js"></script>
+      
+      <script src="../vendor/radio.js/radio.min.js"></script>
+      <script src="../vendor/d3.js/d3.min.js"></script>
+      <script src="../pyannote.js"></script>
+      <script src="../pyannote-axis.js"></script>
+      <script src="../pyannote-annotation.js"></script>
+
+      <script>
+
+        var player = pyannote.VideoPlayer(
+          'player', document.getElementById('player'), 'playerSync');
+
+        player.set('medium', 'source', {'url': 'trailer.webm', 
+                                        'type': 'video/webm'});
+
+        var axis = pyannote.axis.Axis(
+          'axis', document.getElementById('axis'), 'playerSync');
+
+        var plugin1 = pyannote.annotation.Timeline(
+          'plugin1', document.getElementById('plugin1'), 'playerSync', 'dataSync');
+
+        // $.getJSON('annotation.json', function(data) {
+        //   plugin1.set('data', 'content', data['content']);
+        // });
+
+
+      </script>
+    </body>
+</html>
