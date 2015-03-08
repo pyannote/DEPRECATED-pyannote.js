@@ -14,9 +14,9 @@
 
   var my = {};
 
-  my.Axis = function (name, container, timeSync) {
+  my.Axis = function (name, container, mediumSync) {
 
-    var sync = {'time': timeSync};
+    var sync = {'medium': mediumSync};
     var plugin = pyannote.BasePlugin(name, sync, container);
 
     plugin.config = {};
@@ -45,27 +45,47 @@
     plugin.viz.axis = plugin.g.append("g");
     plugin.viz.axis.attr("class", "axis");
 
+    plugin._updateMarker = function (currentTime) {
+      plugin.viz.marker.attr(
+        "transform", "translate(" + plugin.scale(currentTime) + ", 0)");      
+    };
+
+    plugin._updateAxis = function () {
+        var axis = d3.svg.axis().scale(plugin.scale);
+        plugin.viz.axis.call(axis);
+    };
+
     plugin.update = function (category, property, broadcaster, old_value, new_value) {
 
-      var extent = plugin.get('time', 'extent');
-      plugin.scale.domain(extent);
+      if (category === 'medium' && property === 'duration') {
+        plugin.scale.domain([0, new_value]);
+        plugin._updateAxis();
+        return;
+      }
       
-      var axis = d3.svg.axis().scale(plugin.scale);
-      plugin.viz.axis.call(axis);
+      if (category === 'medium' && property === 'currentTime') {
+        plugin._updateMarker(new_value);
+        return;
+      }
 
-      var currentTime = plugin.get('time', 'currentTime');
-      plugin.viz.marker.attr("transform", 
-                         "translate(" + plugin.scale(currentTime) + ", 0)");
     };
 
     plugin.resize = function () {
+      
       var width = plugin.container.clientWidth;
       plugin.svg.attr("width", width);
       plugin.scale.range([0, width-2*plugin.config.margin]);
 
-      // plugin.update();
-    };
+      var duration = plugin.get('medium', 'duration');
+      if (duration !== undefined) { 
+        plugin.scale.domain([0, duration]); 
+        plugin._updateAxis();
+      }
+      
+      var currentTime = plugin.get('medium', 'currentTime');
+      if (currentTime !== undefined) { plugin._updateMarker(currentTime); }
 
+    };
 
     plugin.resize();
 
