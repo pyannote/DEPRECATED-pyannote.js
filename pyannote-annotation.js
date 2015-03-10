@@ -41,7 +41,7 @@
         "transform", "translate(" + plugin.scale(currentTime) + ", 0)");      
     };
 
-    plugin._updateTracks = function(content) {
+    plugin._updateTracks = function(content, colorScale) {
       console.log(plugin.name + ': update tracks');
 
       plugin.tracks = plugin.content.selectAll(".track")
@@ -66,7 +66,7 @@
                     return plugin.scale(d.segment.end) - plugin.scale(d.segment.start);
                 })
                 .attr("height", plugin.config.height*4/5)
-                .style("fill", "black");
+                .style("fill", function(d) { return colorScale(d.label); });
     };
 
 
@@ -74,7 +74,9 @@
 
       if (category === 'medium' && property === 'duration') {
         plugin.scale.domain([0, new_value]);
-        plugin._updateTracks(plugin.get('data', 'content'));
+        var content = plugin.get('data', 'content');
+        var color = plugin.get('data', 'color');
+        plugin._updateTracks(content, color);
         return;
       }
 
@@ -84,8 +86,15 @@
       }
 
       if (category === 'data' && property === 'content') {
-        plugin._updateTracks(new_value); 
+        var color = d3.scale.category20();
+        plugin.set('data', 'color', color);
+        plugin._updateTracks(new_value, color); 
         return;
+      }
+
+      if (broadcaster !== plugin.name && category === 'data' && property === 'color') {
+        var content = plugin.get('data', 'content');
+        plugin._updateTracks(content, new_value);
       }
 
     };
@@ -97,6 +106,9 @@
       var content = plugin.get('data', 'content');
       if (content === undefined) { content = [] };
 
+      var color = plugin.get('data', 'color');
+      if (color === undefined) { color = d3.scale.category20(); };
+
       plugin._updateScale();
       
       if (currentTime !== undefined) {
@@ -104,7 +116,7 @@
       }
       
       if (content !== undefined) { 
-        plugin._updateTracks(content); 
+        plugin._updateTracks(content, color); 
       }
 
     };
