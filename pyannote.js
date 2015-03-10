@@ -1,29 +1,37 @@
 (function (root, factory) {
   if (typeof define === "function" && define.amd) {
-    define(["radio"], factory);
+    define(["d3", "radio"], factory);
   } else if (typeof exports === "object") {
-    module.exports = factory(require("radio"));
+    module.exports = factory(require("d3", "radio"));
   } else {
-    root.pyannote = factory(root.radio);
+    root.pyannote = factory(root.d3, root.radio);
   }
-}(this, function (radio) {
+}(this, function (d3, radio) {
 
   "use strict";
 
   var my = {};
 
-  // broadcast 'resize' event to all plugins on window resize 
-  window.onresize = function () { radio('resize').broadcast(); };
 
-  my.BasePlugin = function (name, sync, container) {
+  // broadcast 'resize' event to all plugins on window resize 
+  var resizeTimeout;
+  window.onresize=function() {
+      // hack to avoid multiple resize
+      if (resizeTimeout) { clearTimeout(resizeTimeout) };
+      resizeTimeout = setTimeout(function(){
+      console.log('window: onresize');
+      radio('resize').broadcast();         
+      }, 500);
+  };
+
+  my.BasePlugin = function (name, sync) {
 
     var plugin = {};
 
+    plugin.config = {};
+
     // plugin name (a.k.a. broadcaster in code below)
     plugin.name = name;
-
-    // plugin container
-    plugin.container = container;
 
     // internal _model
     plugin._model = {};
@@ -80,25 +88,65 @@
       radio(event).subscribe([_update, plugin]);
     }
 
+    return plugin;
+  };
+
+  my.Plugin = function(name, sync, container, height) {
+
+    var plugin = my.BasePlugin(name, sync);
+    plugin.container = container;
+
+    plugin.config.margin = {};
+    plugin.config.margin.height = 10;
+    plugin.config.margin.width = 10;
+    plugin.config.width = plugin.container.clientWidth;
+    plugin.config.height = height;
+
+    plugin.svg = d3.select(plugin.container).append("svg");
+    plugin.svg.attr("height", plugin.config.height + plugin.config.margin.height * 2)
+              .attr("class", "pyannote");
+
+    plugin.border = plugin.svg.append("rect")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("height", plugin.config.height + plugin.config.margin.height * 2)
+            .attr("width", plugin.config.width)
+            .style("stroke", "black")
+            .style("fill", "white")
+            .style("stroke-width", 1);
+
+    plugin.content = plugin.svg.append("g")
+                               .attr("transform", "translate(" + plugin.config.margin.width + ", " + plugin.config.margin.height + ")");
+
+    plugin._resize = function() {
+      plugin.config.width = plugin.container.clientWidth;
+      plugin.svg.attr("width", plugin.config.width);
+      plugin.border.attr("width", plugin.config.width);
+    };
+
     // -- subscription callback -- 
     // called when window (and therefore plugin container) is resized
     plugin.resize = function () {
-      console.log('resize must be overriden');
+      console.log('resize must be overriden in plugin "' + plugin.name + '"');
     };
 
     // subscribe the plugin to the 'resize' event
     radio('resize').subscribe(function() {
+      plugin._resize();
       plugin.resize();
     });
 
-    return plugin;
-  };
+    plugin._resize();
 
+    return plugin;
+
+  };
 
   my.Player = function (audioOrVideo, name, container, mediumSync) {
 
     var sync = {'medium': mediumSync};
-    var plugin = my.BasePlugin(name, sync, container);
+    var plugin = my.BasePlugin(name, sync);
+    plugin.container = container;
 
     plugin.player = d3.select(plugin.container).append(audioOrVideo);
     plugin.player.attr("width", "100%")

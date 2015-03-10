@@ -19,22 +19,19 @@
       <div class="container-fluid">
 
         <div class="row">
-          <!-- <div class="col-sm-8 col-sm-offset-2">
-            <video id="player" src="trailer.webm" type="video/webm" 
-                   width="100%" preload="metadata" controls>
-            </video>
-          </div> -->
-          <div id="player" class="col-sm-8 col-sm-offset-2">
+          <div id="player" class="col-sm-6 col-sm-offset-1">
+          </div>
+          <div id="control" class="col-sm-3 col-sm-offset-1">
           </div>
         </div>
 
         <div class="row">
-          <div id="axis" class="col-sm-8 col-sm-offset-2" >
+          <div id="axis" class="col-sm-10 col-sm-offset-1" height="400">
           </div>
         </div>
 
         <div class="row">
-          <div id="plugin1" class="col-sm-8 col-sm-offset-2" >
+          <div id="plugin1" class="col-sm-10 col-sm-offset-1" >
           </div>
         </div>
 
@@ -57,15 +54,24 @@
         player.set('medium', 'source', {'url': 'http://video.webmfiles.org/big-buck-bunny_trailer.webm', 
                                         'type': 'video/webm'});
 
+        // var control = pyannote.Plugin('control', {}, document.getElementById('control'), 300);
+
         var axis = pyannote.axis.Axis(
-          'axis', document.getElementById('axis'), 'playerSync');
+          'axis', document.getElementById('axis'), 10, 'playerSync');
 
         var plugin1 = pyannote.annotation.Timeline(
-          'plugin1', document.getElementById('plugin1'), 'playerSync', 'dataSync');
+          'plugin1', document.getElementById('plugin1'), 50, 'playerSync', 'dataSync');
 
-        // $.getJSON('annotation.json', function(data) {
-        //   plugin1.set('data', 'content', data['content']);
-        // });
+        $.getJSON('annotation.json', function(data) {
+          plugin1.set('data', 'content', data['content']);
+        });
+
+        // var plugin2 = pyannote.annotation.Timeline(
+        //   'plugin2', document.getElementById('plugin2'), 100, 'playerSync', 'dataSync');
+
+        // var plugin3 = pyannote.annotation.Timeline(
+        //   'plugin3', document.getElementById('plugin3'), 200, 'playerSync', 'dataSync');
+
 
 
       </script>

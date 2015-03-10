@@ -14,45 +14,38 @@
 
   var my = {};
 
-  my.Axis = function (name, container, mediumSync) {
+  my.Axis = function (name, container, height, mediumSync) {
 
     var sync = {'medium': mediumSync};
-    var plugin = pyannote.BasePlugin(name, sync, container);
-
-    plugin.config = {};
-    plugin.config.margin = 50;
-    plugin.config.height = 20;
+    var plugin = pyannote.Plugin(name, sync, container, height);
 
     plugin.scale = d3.scale.linear();
 
-    plugin.svg = d3.select(plugin.container).append("svg");
-    plugin.svg.attr("height", plugin.config.height)
-              .attr("class", "pyannote");
+    plugin.marker = plugin.content.append("line")
+                                  .attr("x1", 0)
+                                  .attr("y1", -plugin.config.margin.height)
+                                  .attr("x2", 0)
+                                  .attr("y2", plugin.config.height+plugin.config.margin.height)
+                                  .attr("class", "marker")
+                                  .attr("stroke-width", 3)
+                                  .style("shape-rendering", "crispEdges")
+                                  .style("stroke", "red");
 
-    plugin.g = plugin.svg.append("g");
-    plugin.g.attr("transform", "translate(" + plugin.config.margin + ", 0)");
-
-    plugin.viz = {};
-    plugin.viz.marker = plugin.g.append("line")
-                                .attr("x1", 0)
-                                .attr("y1", 0)
-                                .attr("x2", 0)
-                                .attr("y2", plugin.config.height)
-                                .attr("stroke-width", 3)
-                                .style("shape-rendering", "crispEdges")
-                                .style("stroke", "red");
-
-    plugin.viz.axis = plugin.g.append("g");
-    plugin.viz.axis.attr("class", "axis");
+    plugin.axis = plugin.content.append("g")
+                                .attr("class", "axis");
+    
+    plugin._updateScale = function() {
+      plugin.scale.range([0, plugin.config.width-2*plugin.config.margin.width]);
+    };
 
     plugin._updateMarker = function (currentTime) {
-      plugin.viz.marker.attr(
+      plugin.marker.attr(
         "transform", "translate(" + plugin.scale(currentTime) + ", 0)");      
     };
 
     plugin._updateAxis = function () {
         var axis = d3.svg.axis().scale(plugin.scale);
-        plugin.viz.axis.call(axis);
+        plugin.axis.call(axis);
     };
 
     plugin.update = function (category, property, broadcaster, old_value, new_value) {
@@ -72,20 +65,24 @@
 
     plugin.resize = function () {
       
-      var width = plugin.container.clientWidth;
-      plugin.svg.attr("width", width);
-      plugin.scale.range([0, width-2*plugin.config.margin]);
-
-      var duration = plugin.get('medium', 'duration');
-      if (duration !== undefined) { 
-        plugin.scale.domain([0, duration]); 
-        plugin._updateAxis();
-      }
-      
       var currentTime = plugin.get('medium', 'currentTime');
-      if (currentTime !== undefined) { plugin._updateMarker(currentTime); }
 
+      plugin._updateScale();
+
+      plugin._updateAxis();
+
+      if (currentTime !== undefined) { 
+        plugin._updateMarker(currentTime); 
+      }      
     };
+
+
+    plugin.border.on("mousemove", function() {
+      var coordinates = d3.mouse(plugin.content[0][0]);
+      plugin.set('medium', 'currentTime', plugin.scale.invert(coordinates[0]));
+    });
+
+
 
     plugin.resize();
 
