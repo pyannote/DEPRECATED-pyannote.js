@@ -121,6 +121,11 @@
 
     };
 
+    plugin.border.on("click", function() {
+      var coordinates = d3.mouse(plugin.content[0][0]);
+      plugin.set('medium', 'currentTime', plugin.scale.invert(coordinates[0]));
+    });
+
     plugin.resize();
 
     return plugin;
