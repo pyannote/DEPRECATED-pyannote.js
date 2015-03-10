@@ -107,13 +107,11 @@
               .attr("class", "pyannote");
 
     plugin.border = plugin.svg.append("rect")
+            .attr("class", "border")
             .attr("x", 0)
             .attr("y", 0)
             .attr("height", plugin.config.height + plugin.config.margin.height * 2)
             .attr("width", plugin.config.width)
-            .style("stroke", "black")
-            .style("fill", "white")
-            .style("stroke-width", 1);
 
     plugin.content = plugin.svg.append("g")
                                .attr("transform", "translate(" + plugin.config.margin.width + ", " + plugin.config.margin.height + ")");

@@ -22,14 +22,11 @@
     plugin.scale = d3.scale.linear();
     
     plugin.marker = plugin.content.append("line")
+                                  .attr("class", "marker")
                                   .attr("x1", 0)
                                   .attr("y1", -plugin.config.margin.height)
                                   .attr("x2", 0)
-                                  .attr("y2", plugin.config.height+plugin.config.margin.height)
-                                  .attr("class", "marker")
-                                  .attr("stroke-width", 3)
-                                  .style("shape-rendering", "crispEdges")
-                                  .style("stroke", "red");
+                                  .attr("y2", plugin.config.height+plugin.config.margin.height);
 
     plugin._updateScale = function() {
       console.log(plugin.name + ': update scale');

@@ -8,3 +8,15 @@
     stroke: #000;
     shape-rendering: crispEdges;
 }
+
+.pyannote line.marker {
+    stroke: #f00;
+    stroke-width: 3;
+    shape-rendering: crispEdges;
+}
+
+.pyannote rect.border {
+    stroke: #000;
+    fill: #fff;
+    stroke-width: 1;
+};
