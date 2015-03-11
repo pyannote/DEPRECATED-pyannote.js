@@ -16,24 +16,32 @@
     </head>
     <body>
 
-      <div class="container-fluid">
+      <div class="container">
 
         <div class="row">
-          <div id="player" class="col-sm-6 col-sm-offset-1">
-          </div>
-          <div id="control" class="col-sm-3 col-sm-offset-1">
-          </div>
+          <div class="col-sm-2"><h4>Video player</h4></div>
+          <div id="player" class="col-sm-6"></div>
+          <div class="col-sm-offset-1 col-sm-3"><p><code>pyannote.VideoPlayer</code></p></div>
         </div>
 
         <div class="row">
-          <div id="axis" class="col-sm-10 col-sm-offset-1" height="400">
-          </div>
+          <div class="col-sm-2"><h4>Temporal axis</h4></div>
+          <div id="axis" class="col-sm-6"></div>
+          <div class="col-sm-offset-1 col-sm-3"><p><code>pyannote.axis.Axis</code></p></div>
         </div>
 
         <div class="row">
-          <div id="plugin1" class="col-sm-10 col-sm-offset-1" >
-          </div>
+          <div class="col-sm-2"><h4>Annotation timeline</h4></div>
+          <div id="plugin1" class="col-sm-6"></div>
+          <div class="col-sm-offset-1 col-sm-3"><p><code>pyannote.annotation.Timeline</code></p></div>
         </div>
+
+        <div class="row">
+          <div class="col-sm-2"><h4>Annotation chart</h4></div>
+          <div id="chart" class="col-sm-6"></div>
+          <div class="col-sm-offset-1 col-sm-3"><p><code>pyannote.annotation.Chart</code></p></div>
+        </div>
+
 
       </div>
 
@@ -54,13 +62,14 @@
         player.set('medium', 'source', {'url': 'http://video.webmfiles.org/big-buck-bunny_trailer.webm', 
                                         'type': 'video/webm'});
 
-        // var control = pyannote.Plugin('control', {}, document.getElementById('control'), 300);
 
         var axis = pyannote.axis.Axis(
           'axis', document.getElementById('axis'), 10, 'playerSync');
 
         var plugin1 = pyannote.annotation.Timeline(
           'plugin1', document.getElementById('plugin1'), 50, 'playerSync', 'dataSync');
+
+        var chart = pyannote.annotation.Chart('chart', document.getElementById('chart'), 300, 'dataSync');
 
         $.getJSON('annotation.json', function(data) {
           plugin1.set('data', 'content', data['content']);
